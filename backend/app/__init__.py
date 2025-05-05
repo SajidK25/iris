@@ -13,9 +13,25 @@ def create_app():
         methods=["GET", "POST", "OPTIONS"]
     )
 
+    # Register Blueprint
+    print("DEBUG: Registering search_bp")
+    app.register_blueprint(search_bp)
+    print("DEBUG: search_bp registered successfully")
+
     @app.route("/api/health", methods=["GET"])
     def health_check():
-        """Health check endpoint to verify the API is running"""
+        print("DEBUG: /api/health endpoint hit")
         return jsonify({"status": "ok", "message": "API is running"})
+
+    @app.errorhandler(404)
+    def not_found(error):
+        print(f"DEBUG: 404 error for {request.url}")
+        return jsonify({"error": "Not found", "message": "The requested resource does not exist"}), 404
+
+    @app.after_request
+    def log_response(response):
+        print(f"DEBUG: Response Status: {response.status}")
+        print(f"DEBUG: Response Headers: {response.headers}")
+        return response
 
     return app
