@@ -1,5 +1,10 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+try:
+    from app.routes import search_bp  # Ensure correct import
+except ImportError as e:
+    print(f"ERROR: Failed to import search_bp: {e}")
+    raise
 
 def create_app():
     app = Flask(__name__)
