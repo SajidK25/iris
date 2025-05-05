@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => {
   // Load environment variables based on mode
   const env = loadEnv(mode, process.cwd(), "VITE_");
   return {
+    base: "/",
     server: {
       host: "::",
       port: 8080,
