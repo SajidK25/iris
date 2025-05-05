@@ -36,27 +36,84 @@ def _get_query_embedding(query: str):
     return create_embedding(query)
 
 
-def search_apartments(query, filter_dict=None, top_k=10, image_urls=None, page=1):
+def search_apartments(query, filter_dict=None, top_k=10, image_urls=None):
+    """
+    Search for apartments in the Pinecone index
+
+    Args:
+        query (str): The search query
+        filter_dict (dict, optional): Filter criteria for metadata. Defaults to None.
+        top_k (int, optional): Number of results to return. Defaults to 10.
+        image_urls (list, optional): List of image URLs to analyze. Defaults to None.
+
+    Returns:
+        list: List of matching apartments with scores
+    """
     index = pc.Index(INDEX_NAME)
     search_text = query.strip()
     if image_urls and len(image_urls) > 0:
-        # ... (existing image URL handling)
-        query_embedding = create_embedding(combined_query)
+        try:
+            print(f"Processing {len(image_urls)} image URLs for analysis")
+            openai_api_key = os.getenv("OPENAI_API_KEY")
+            if not openai_api_key:
+                print("ERROR: OPENAI_API_KEY not found in environment")
+                return []
+            
+            try:
+                client = openai.OpenAI(api_key=openai_api_key)
+                print("Successfully initialized OpenAI client")
+                messages = [
+                    {"role": "system", "content": "You are a helpful assistant that generates semantic search descriptions for apartment listings. Provide a concise description (less than 20 words) focusing on aesthetics and design elements visible in the images."}
+                ]
+                content = []
+                if search_text:
+                    content.append(
+                        {"type": "text", 
+                         "text": f"These are images of apartment interiors/exteriors. Generate a 20-word search description that combines analyzing these images with the text query: '{search_text}'. Focus on aesthetics and design elements."}
+                    )
+                else:
+                    content.append(
+                        {"type": "text", 
+                         "text": "These are images of apartment interiors/exteriors. Generate a 20-word search description focusing on aesthetics and design elements visible in the images."}
+                    )
+                for url in image_urls[:5]:
+                    print(f"Adding image URL to content: {url[:60]}...")
+                    content.append(
+                        {"type": "image_url", "image_url": {"url": url}}
+                    )
+                messages.append({"role": "user", "content": content})
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=messages,
+                    max_tokens=100
+                )
+                combined_query = response.choices[0].message.content.strip()
+                print(f"Combined query for embedding: {combined_query}")
+                query_embedding = create_embedding(combined_query)
+                
+            except Exception as api_error:
+                print(f"ERROR during OpenAI API call: {api_error}")
+                if search_text:
+                    print(f"Falling back to text-only query: {search_text}")
+                    query_embedding = create_embedding(search_text)
+                else:
+                    print("No fallback query available")
+                    return []
+        except Exception as e:
+            print(f"Error analyzing images with OpenAI: {e}")
+            if search_text:
+                query_embedding = create_embedding(search_text)
+            else:
+                print("No fallback query available")
+                return []
     else:
         query_embedding = create_embedding(search_text)
 
     if query_embedding is None:
         print("Failed to create embedding for query")
         return []
-
-    # Apply pagination
-    offset = (page - 1) * top_k
     search_results = index.query(
-        vector=query_embedding,
-        filter=filter_dict,
-        top_k=top_k,
-        include_metadata=True,
-        offset=offset  # Pinecone doesn't support offset; implement in post-processing if needed
+        vector=query_embedding, filter=filter_dict, top_k=top_k, include_metadata=True
     )
     formatted_results = []
     for match in search_results.matches:
