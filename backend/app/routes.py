@@ -47,7 +47,7 @@ def search():
         if image_urls_json:
             try:
                 import json
-                image_urls = json.loads(image_urls_jsonCHA)
+                image_urls = json.loads(image_urls_json)
                 print(f"DEBUG: Received {len(image_urls)} image URLs")
             except json.JSONDecodeError as e:
                 print(f"ERROR: Failed to parse image URLs: {image_urls_json[:100]}..., error: {e}")
