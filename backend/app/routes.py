@@ -8,7 +8,7 @@ import traceback
 
 search_bp = Blueprint("search", __name__)
 
-@search_bp.route("/api/search", methods=["GET"])
+@search_bp.route("/api/search", methods=["GET","OPTIONS"])
 def search():
     """
     Search for apartments based on text query, image URLs, and optional filters.
@@ -98,7 +98,7 @@ def search():
         return jsonify({"error": error_message}), 500
 
 
-@search_bp.route("/api/apartment/preview/<string:apartment_id>", methods=["GET"])
+@search_bp.route("/api/apartment/preview/<string:apartment_id>", methods=["GET","OPTIONS"])
 def apartment_preview(apartment_id):
     """
     Get preview data for a specific apartment by ID, with optional query parameter
@@ -125,7 +125,7 @@ def apartment_preview(apartment_id):
         return jsonify({"error": error_message}), 500
 
 
-@search_bp.route("/api/apartment/details/<string:apartment_id>", methods=["GET"])
+@search_bp.route("/api/apartment/details/<string:apartment_id>", methods=["GET","OPTIONS"])
 def apartment_details(apartment_id):
     """
     Get full details for a specific apartment by ID

@@ -7,7 +7,7 @@ def create_app():
     # Configure CORS to allow requests from your frontend with credentials support
     CORS(
         app,
-        origins=["https://squid-app-pnek9.ondigitalocean.app"],
+        origins=["https://iris-sigma-ebon.vercel.app"],
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization", "Accept"],
         methods=["GET", "POST", "OPTIONS"]
